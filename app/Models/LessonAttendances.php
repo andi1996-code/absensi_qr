@@ -16,12 +16,14 @@ class LessonAttendances extends Model
         'date',
         'hour_number',
         'scanned_at',
+        'status',
     ];
 
     protected $casts = [
         'date' => 'date',
         'hour_number' => 'integer',
         'scanned_at' => 'datetime',
+        'status' => 'string',
     ];
 
     /**

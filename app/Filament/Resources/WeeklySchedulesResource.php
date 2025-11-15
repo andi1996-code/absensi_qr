@@ -66,6 +66,11 @@ class WeeklySchedulesResource extends Resource
                                     ->preload()
                                     ->required(),
 
+                                Forms\Components\TextInput::make('class_room')
+                                    ->label('Kelas')
+                                    ->placeholder('e.g., A, B, IPA-1')
+                                    ->maxLength(10),
+
                                 Forms\Components\Hidden::make('hour_number')
                                     ->default(0),
                             ])
@@ -107,6 +112,11 @@ class WeeklySchedulesResource extends Resource
                             ->preload()
                             ->required(),
 
+                        Forms\Components\TextInput::make('class_room')
+                            ->label('Kelas')
+                            ->placeholder('e.g., A, B, IPA-1')
+                            ->maxLength(10),
+
                         Forms\Components\Hidden::make('hour_number')
                             ->default(0),
                     ])
@@ -147,6 +157,12 @@ class WeeklySchedulesResource extends Resource
                     ->badge()
                     ->color('info')
                     ->width('25%'),
+
+                Tables\Columns\TextColumn::make('class_room')
+                    ->label('Kelas')
+                    ->badge()
+                    ->color('success')
+                    ->width('10%'),
             ])
             ->striped()
             ->filters([

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\DurationSetting;
 use App\Models\LessonAttendances;
+use App\Models\ScheduleTime;
 use App\Models\Teachers;
 use App\Models\WeeklySchedules;
 use Carbon\Carbon;
@@ -17,10 +18,11 @@ class ScannerPage extends Component
     public ?string $messageType = null;
     public int $scanCount = 0;
     public bool $processing = false;
+    public ?string $selectedClassRoom = null;
 
     public function mount(): void
     {
-        $this->scanCount = LessonAttendances::whereDate('date', today())->count();
+        $this->scanCount = LessonAttendances::whereDate('date', today())->where('status', 'present')->count();
     }
 
     #[\Livewire\Attributes\On('qrCodeScanned')]
@@ -59,6 +61,20 @@ class ScannerPage extends Component
             $currentHour = $this->getCurrentHour();
             $dayOfWeek = $now->dayOfWeek;
 
+            if ($currentHour == 0) {
+                $this->teacherData = [
+                    'name' => $teacher->name,
+                    'nip' => $teacher->nip,
+                    'photo' => $teacher->photo,
+                    'status' => 'no_lesson_time',
+                    'message' => 'Saat ini bukan waktu pelajaran',
+                ];
+                $this->messageType = 'warning';
+                $this->message = '⚠️ Bukan waktu pelajaran';
+                $this->processing = false;
+                return;
+            }
+
             // Check if teacher has schedule today
             $schedules = WeeklySchedules::where('teacher_id', $teacher->id)
                 ->where('day_of_week', $dayOfWeek)
@@ -78,10 +94,26 @@ class ScannerPage extends Component
                 return;
             }
 
-            // Check if current time matches any schedule
-            $hasCurrentHour = $schedules->contains('hour_number', $currentHour);
+            // Get schedule blocks
+            $blocks = $this->getScheduleBlocks($schedules);
 
-            if (!$hasCurrentHour) {
+            // Filter blocks by selected class room if specified
+            if ($this->selectedClassRoom) {
+                $blocks = array_filter($blocks, function ($block) {
+                    return $block['class_room'] === $this->selectedClassRoom;
+                });
+            }
+
+            // Find the block that contains current hour
+            $currentBlock = null;
+            foreach ($blocks as $block) {
+                if (in_array($currentHour, $block['hours'])) {
+                    $currentBlock = $block;
+                    break;
+                }
+            }
+
+            if (!$currentBlock) {
                 $totalHours = $schedules->count();
                 $this->teacherData = [
                     'name' => $teacher->name,
@@ -96,50 +128,74 @@ class ScannerPage extends Component
                 return;
             }
 
-            // Check if already scanned this hour
-            $alreadyScanned = LessonAttendances::where('teacher_id', $teacher->id)
+            // Check if already processed this block (any hour in block has record)
+            $existingRecords = LessonAttendances::where('teacher_id', $teacher->id)
                 ->whereDate('date', today())
-                ->where('hour_number', $currentHour)
-                ->first();
+                ->whereIn('hour_number', $currentBlock['hours'])
+                ->get();
 
-            if ($alreadyScanned) {
+            if ($existingRecords->isNotEmpty()) {
                 $this->teacherData = [
                     'name' => $teacher->name,
                     'nip' => $teacher->nip,
                     'photo' => $teacher->photo,
                     'status' => 'already_scanned',
-                    'message' => 'Sudah scan di jam ini pukul ' . $alreadyScanned->scanned_at->format('H:i:s'),
+                    'message' => 'Sudah scan untuk blok ini',
                 ];
                 $this->messageType = 'info';
-                $this->message = '⏱️ ' . $teacher->name . ' sudah melakukan scan';
+                $this->message = '⏱️ ' . $teacher->name . ' sudah melakukan scan untuk blok ini';
                 $this->processing = false;
                 return;
             }
 
-            // SUCCESS: Create attendance record
-            LessonAttendances::create([
-                'teacher_id' => $teacher->id,
-                'date' => today(),
-                'hour_number' => $currentHour,
-                'scanned_at' => $now,
-            ]);
+            // Determine statuses based on scan hour
+            $minHour = min($currentBlock['hours']);
+            $statuses = [];
+            if ($currentHour == $minHour) {
+                // Scan at first hour: all present
+                foreach ($currentBlock['hours'] as $hour) {
+                    $statuses[$hour] = 'present';
+                }
+            } elseif ($currentHour == $minHour + 1) {
+                // Scan at second hour: first absent, rest present
+                foreach ($currentBlock['hours'] as $hour) {
+                    $statuses[$hour] = ($hour == $minHour) ? 'absent' : 'present';
+                }
+            } else {
+                // For other cases, assume present for current and after, but since example only first/second, maybe error
+                $this->message = 'Scan hanya diperbolehkan di jam pertama atau kedua blok';
+                $this->processing = false;
+                return;
+            }
+
+            // Create attendance records for the block
+            foreach ($statuses as $hour => $status) {
+                LessonAttendances::create([
+                    'teacher_id' => $teacher->id,
+                    'date' => today(),
+                    'hour_number' => $hour,
+                    'scanned_at' => $status === 'present' ? $now : null,
+                    'status' => $status,
+                ]);
+            }
 
             $timeRange = $this->getTimeRange($currentHour);
+            $classInfo = $this->selectedClassRoom ? " di {$this->selectedClassRoom}" : '';
             $this->teacherData = [
                 'name' => $teacher->name,
                 'nip' => $teacher->nip,
                 'photo' => $teacher->photo,
                 'status' => 'success',
-                'message' => "Jam Ke-{$currentHour} ({$timeRange})",
+                'message' => "Blok {$currentBlock['class_room']} Jam Ke-{$currentHour} ({$timeRange})",
                 'scanned_at' => $now->format('H:i:s'),
             ];
             $this->messageType = 'success';
-            $this->message = '✅ Absen berhasil dicatat!';
-            $this->scanCount++;
+            $this->message = '✅ Absen blok berhasil dicatat' . $classInfo . '!';
+            $this->scanCount += count($statuses);
 
-            // Reset processing flag untuk allow scan berikutnya
+            // Reset processing flag
             $this->processing = false;
-
+            $this->selectedClassRoom = null;
         } catch (\Exception $e) {
             $this->teacherData = null;
             $this->messageType = 'danger';
@@ -147,71 +203,114 @@ class ScannerPage extends Component
 
             // Reset processing flag even on error
             $this->processing = false;
+            $this->selectedClassRoom = null;
         }
     }
 
     private function getCurrentHour(): int
     {
-        $now = now();
-        $lessonStarts = $this->getLessonStartTimes();
+        $now = now()->format('H:i:s');
+        $scheduleTime = ScheduleTime::where('is_lesson', true)
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>', $now)
+            ->first();
 
-        foreach ($lessonStarts as $hour => $startTime) {
-            $start = Carbon::createFromTimeString($startTime);
-            $nextHour = $hour + 1;
-            $end = isset($lessonStarts[$nextHour])
-                ? Carbon::createFromTimeString($lessonStarts[$nextHour])
-                : $start->copy()->addMinutes(35); // Last lesson 35 minutes
-
-            if ($now >= $start && $now < $end) {
-                return $hour;
-            }
-        }
-
-        // If after last lesson, return last hour
-        return count($lessonStarts);
+        return $scheduleTime ? $scheduleTime->hour_number : 0; // Return 0 if no lesson time
     }
 
     private function getLessonStartTimes(): array
     {
-        $durationMinutes = DurationSetting::query()->latest()->value('lesson_duration_minutes') ?? 45;
-
-        $times = [];
-        $currentTime = Carbon::createFromTimeString('08:00');
-
-        for ($hour = 1; $hour <= 9; $hour++) {
-            $times[$hour] = $currentTime->format('H:i');
-            $end = $currentTime->copy()->addMinutes($durationMinutes);
-
-            if ($hour == 3) {
-                // After break
-                $currentTime = Carbon::createFromTimeString('10:00');
-            } elseif ($hour == 6) {
-                // After dzuhur
-                $currentTime = Carbon::createFromTimeString('12:25');
-            } else {
-                $currentTime = $end;
-            }
-        }
-
-        return $times;
+        // Deprecated: now using ScheduleTime model
+        return [];
     }
 
     private function getTimeRange(int $hour): string
     {
-        $lessonStarts = $this->getLessonStartTimes();
+        $scheduleTime = ScheduleTime::where('hour_number', $hour)->first();
 
-        if (!isset($lessonStarts[$hour])) {
+        if (!$scheduleTime) {
             return 'Waktu tidak tersedia';
         }
 
-        $start = Carbon::createFromTimeString($lessonStarts[$hour]);
-        $nextHour = $hour + 1;
-        $durationMinutes = DurationSetting::query()->latest()->value('lesson_duration_minutes') ?? 45;
-        $end = isset($lessonStarts[$nextHour])
-            ? Carbon::createFromTimeString($lessonStarts[$nextHour])
-            : $start->copy()->addMinutes($durationMinutes);
+        return $scheduleTime->formatted_start_time . ' - ' . $scheduleTime->formatted_end_time;
+    }
 
-        return $start->format('H:i') . ' - ' . $end->format('H:i');
+    private function getScheduleBlocks($schedules): array
+    {
+        $blocks = [];
+        $grouped = $schedules->groupBy('class_room');
+
+        foreach ($grouped as $classRoom => $classSchedules) {
+            $hours = $classSchedules->pluck('hour_number')->sort()->values()->toArray();
+            // Assume consecutive hours are a block
+            $blockHours = [];
+            $currentBlock = [];
+            foreach ($hours as $hour) {
+                if (empty($currentBlock) || $hour == end($currentBlock) + 1) {
+                    $currentBlock[] = $hour;
+                } else {
+                    if (!empty($currentBlock)) {
+                        $blockHours[] = $currentBlock;
+                        $currentBlock = [];
+                    }
+                    $currentBlock[] = $hour;
+                }
+            }
+            if (!empty($currentBlock)) {
+                $blockHours[] = $currentBlock;
+            }
+
+            foreach ($blockHours as $block) {
+                $blocks[] = [
+                    'class_room' => $classRoom,
+                    'hours' => $block,
+                ];
+            }
+        }
+
+        return $blocks;
+    }
+
+    private static function getScheduleInfoFromScan(?int $teacherId, ?string $selectedClassRoom = null): string
+    {
+        if (!$teacherId) {
+            return '⏳ Menunggu scan QR code guru...';
+        }
+
+        $teacher = \App\Models\Teachers::find($teacherId);
+        if (!$teacher) {
+            return '❌ Guru tidak ditemukan';
+        }
+
+        $dayOfWeek = now()->dayOfWeek;
+        $currentHour = static::getCurrentHour();
+        $dayName = now()->format('l');
+
+        $schedules = WeeklySchedules::where('teacher_id', $teacherId)
+            ->where('day_of_week', $dayOfWeek)
+            ->get();
+
+        if ($schedules->isEmpty()) {
+            return "❌ {$teacher->name} tidak punya jadwal pada {$dayName}";
+        }
+
+        // Filter by selected class room if specified
+        if ($selectedClassRoom) {
+            $schedules = $schedules->where('class_room', $selectedClassRoom);
+        }
+
+        // Check if jam ini ada jadwal
+        $hasCurrentHour = $schedules->contains('hour_number', $currentHour);
+
+        if (!$hasCurrentHour) {
+            $totalHours = $schedules->count();
+            $classInfo = $selectedClassRoom ? " di kelas {$selectedClassRoom}" : '';
+            return "❌ {$teacher->name} tidak ada pelajaran jam ke-{$currentHour}{$classInfo}, tapi punya {$totalHours} jam hari ini";
+        }
+
+        $timeRange = static::getTimeRange($currentHour);
+        $classInfo = $selectedClassRoom ? " di {$selectedClassRoom}" : '';
+        return "✅ {$teacher->name} - Jam Ke-{$currentHour} ({$timeRange}){$classInfo}";
     }
 
     #[\Livewire\Attributes\Layout('components.layouts.blank')]

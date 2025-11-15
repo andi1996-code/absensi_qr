@@ -6,6 +6,7 @@ use App\Filament\Resources\LessonAttendancesResource\Pages;
 use App\Filament\Resources\LessonAttendancesResource\RelationManagers;
 use App\Models\DurationSetting;
 use App\Models\LessonAttendances;
+use App\Models\ScheduleTime;
 use App\Models\WeeklySchedules;
 use Carbon\Carbon;
 use Filament\Forms;
@@ -73,6 +74,16 @@ class LessonAttendancesResource extends Resource
                             ->required()
                             ->helperText('Waktu ketika absensi dicatat. Bisa diubah jika ada kendala teknis seperti server error.')
                             ->columnSpanFull(),
+
+                        Forms\Components\Select::make('status')
+                            ->label('Status Absensi')
+                            ->options([
+                                'present' => 'Hadir',
+                                'absent' => 'Alpha',
+                            ])
+                            ->default('present')
+                            ->required()
+                            ->helperText('Status kehadiran: Hadir atau Alpha'),
                     ])
                     ->columns(1)
                     ->visible(fn($context) => $context === 'edit'),
@@ -213,23 +224,13 @@ class LessonAttendancesResource extends Resource
      */
     private static function getCurrentHour(): int
     {
-        $now = now();
-        $lessonStarts = static::getLessonStartTimes();
+        $now = now()->format('H:i:s');
+        $scheduleTime = ScheduleTime::where('is_lesson', true)
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>', $now)
+            ->first();
 
-        foreach ($lessonStarts as $hour => $startTime) {
-            $start = Carbon::createFromTimeString($startTime);
-            $nextHour = $hour + 1;
-            $end = isset($lessonStarts[$nextHour])
-                ? Carbon::createFromTimeString($lessonStarts[$nextHour])
-                : $start->copy()->addMinutes(35); // Last lesson 35 minutes
-
-            if ($now >= $start && $now < $end) {
-                return $hour;
-            }
-        }
-
-        // If after last lesson, return last hour
-        return count($lessonStarts);
+        return $scheduleTime ? $scheduleTime->hour_number : 0;
     }
 
     /**
@@ -237,27 +238,8 @@ class LessonAttendancesResource extends Resource
      */
     private static function getLessonStartTimes(): array
     {
-        $durationMinutes = DurationSetting::query()->latest()->value('lesson_duration_minutes') ?? 45;
-
-        $times = [];
-        $currentTime = Carbon::createFromTimeString('08:00');
-
-        for ($hour = 1; $hour <= 9; $hour++) {
-            $times[$hour] = $currentTime->format('H:i');
-            $end = $currentTime->copy()->addMinutes($durationMinutes);
-
-            if ($hour == 3) {
-                // After break
-                $currentTime = Carbon::createFromTimeString('10:00');
-            } elseif ($hour == 6) {
-                // After dzuhur
-                $currentTime = Carbon::createFromTimeString('12:25');
-            } else {
-                $currentTime = $end;
-            }
-        }
-
-        return $times;
+        // Deprecated: now using ScheduleTime model
+        return [];
     }
 
     /**
@@ -303,20 +285,13 @@ class LessonAttendancesResource extends Resource
      */
     private static function getTimeRange(int $hour): string
     {
-        $lessonStarts = static::getLessonStartTimes();
+        $scheduleTime = ScheduleTime::where('hour_number', $hour)->first();
 
-        if (!isset($lessonStarts[$hour])) {
+        if (!$scheduleTime) {
             return 'Waktu tidak tersedia';
         }
 
-        $start = Carbon::createFromTimeString($lessonStarts[$hour]);
-        $nextHour = $hour + 1;
-        $durationMinutes = DurationSetting::query()->latest()->value('lesson_duration_minutes') ?? 45;
-        $end = isset($lessonStarts[$nextHour])
-            ? Carbon::createFromTimeString($lessonStarts[$nextHour])
-            : $start->copy()->addMinutes($durationMinutes);
-
-        return $start->format('H:i') . ' - ' . $end->format('H:i');
+        return $scheduleTime->formatted_start_time . ' - ' . $scheduleTime->formatted_end_time;
     }
 
     public static function table(Table $table): Table
@@ -347,6 +322,13 @@ class LessonAttendancesResource extends Resource
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->formatStateUsing(fn($state) => $state === 'present' ? 'Hadir' : 'Alpha')
+                    ->badge()
+                    ->color(fn($state) => $state === 'present' ? 'success' : 'danger')
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('teacher')

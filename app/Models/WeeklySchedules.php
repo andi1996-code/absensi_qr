@@ -14,6 +14,7 @@ class WeeklySchedules extends Model
         'day_of_week',
         'hour_number',
         'schedule_time_id',
+        'class_room',
     ];
 
     protected $casts = [

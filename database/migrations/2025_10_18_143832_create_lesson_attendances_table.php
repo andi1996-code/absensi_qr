@@ -17,8 +17,8 @@ return new class extends Migration
             $table->foreignId('teacher_id')->constrained()->onDelete('cascade');
             $table->date('date');
             $table->tinyInteger('hour_number'); // 1-8
-            $table->timestamp('scanned_at');
-            $table->unique(['teacher_id', 'date', 'hour_number']); // hanya 1x per sesi
+            $table->timestamp('scanned_at')->nullable();
+            $table->enum('status', ['present', 'absent'])->default('present');
         });
     }
 

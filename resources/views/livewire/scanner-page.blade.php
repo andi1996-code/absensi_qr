@@ -13,6 +13,20 @@
             <!-- Scanner Input -->
             <div class="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-6 border border-white/20">
                 <label class="block text-sm font-semibold text-white mb-3 text-center">🔍 Scan QR Code</label>
+                <!-- Class Room Selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-white mb-2">🏫 Pilih Kelas (Opsional)</label>
+                    <select
+                        wire:model.live="selectedClassRoom"
+                        class="w-full px-4 py-3 text-lg border-2 rounded-xl focus:ring-4 focus:ring-blue-400 focus:border-transparent bg-white/5 text-white placeholder-gray-400 transition-all border-white/30"
+                    >
+                        <option value="">Semua Kelas</option>
+                        @foreach(\App\Models\WeeklySchedules::distinct('class_room')->pluck('class_room') as $classRoom)
+                            <option value="{{ $classRoom }}">{{ $classRoom }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-300 mt-1">Pilih kelas untuk filter scan (opsional)</p>
+                </div>
                 <input
                     type="text"
                     id="scanner-input"

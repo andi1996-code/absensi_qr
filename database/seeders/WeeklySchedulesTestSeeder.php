@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ScheduleTime;
 use App\Models\Teachers;
 use App\Models\WeeklySchedules;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -15,9 +16,9 @@ class WeeklySchedulesTestSeeder extends Seeder
      * Run the database seeds.
      *
      * Membuat jadwal sederhana untuk 3 guru test:
-     * - Budi Santoso: 5 jam/minggu (Senin-Jumat)
-     * - Siti Nurhaliza: 6 jam/minggu (Senin-Rabu, Jumat-Sabtu)
-     * - Ahmad Wijaya: 7 jam/minggu (Senin-Sabtu)
+     * - Budi Santoso: 5 jam/minggu di kelas A (Senin-Jumat)
+     * - Siti Nurhaliza: 6 jam/minggu di kelas B (Senin-Rabu, Jumat-Sabtu)
+     * - Ahmad Wijaya: 7 jam/minggu di kelas C (Senin-Sabtu)
      */
     public function run(): void
     {
@@ -61,6 +62,7 @@ class WeeklySchedulesTestSeeder extends Seeder
 
         // Insert jadwal Budi Santoso
         foreach ($budiSchedule as $schedule) {
+            $scheduleTime = ScheduleTime::where('hour_number', $schedule['hour_number'])->first();
             WeeklySchedules::updateOrCreate(
                 [
                     'teacher_id' => $teachers[0]->id,
@@ -68,7 +70,8 @@ class WeeklySchedulesTestSeeder extends Seeder
                     'hour_number' => $schedule['hour_number'],
                 ],
                 [
-                    'schedule_time_id' => null,
+                    'schedule_time_id' => $scheduleTime ? $scheduleTime->id : null,
+                    'class_room' => 'A', // Semua jadwal Budi di kelas A
                 ]
             );
         }
@@ -76,6 +79,7 @@ class WeeklySchedulesTestSeeder extends Seeder
 
         // Insert jadwal Siti Nurhaliza
         foreach ($sitiSchedule as $schedule) {
+            $scheduleTime = ScheduleTime::where('hour_number', $schedule['hour_number'])->first();
             WeeklySchedules::updateOrCreate(
                 [
                     'teacher_id' => $teachers[1]->id,
@@ -83,7 +87,8 @@ class WeeklySchedulesTestSeeder extends Seeder
                     'hour_number' => $schedule['hour_number'],
                 ],
                 [
-                    'schedule_time_id' => null,
+                    'schedule_time_id' => $scheduleTime ? $scheduleTime->id : null,
+                    'class_room' => 'B', // Semua jadwal Siti di kelas B
                 ]
             );
         }
@@ -91,6 +96,7 @@ class WeeklySchedulesTestSeeder extends Seeder
 
         // Insert jadwal Ahmad Wijaya
         foreach ($ahmadSchedule as $schedule) {
+            $scheduleTime = ScheduleTime::where('hour_number', $schedule['hour_number'])->first();
             WeeklySchedules::updateOrCreate(
                 [
                     'teacher_id' => $teachers[2]->id,
@@ -98,7 +104,8 @@ class WeeklySchedulesTestSeeder extends Seeder
                     'hour_number' => $schedule['hour_number'],
                 ],
                 [
-                    'schedule_time_id' => null,
+                    'schedule_time_id' => $scheduleTime ? $scheduleTime->id : null,
+                    'class_room' => 'C', // Semua jadwal Ahmad di kelas C
                 ]
             );
         }
