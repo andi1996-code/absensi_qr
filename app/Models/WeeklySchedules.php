@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class WeeklySchedules extends Model
+{
+    protected $table = 'weekly_schedules';
+
+    protected $fillable = [
+        'teacher_id',
+        'day_of_week',
+        'hour_number',
+        'schedule_time_id',
+    ];
+
+    protected $casts = [
+        'day_of_week' => 'integer',
+        'hour_number' => 'integer',
+    ];
+
+    public $timestamps = false;
+
+    /**
+     * Get the teacher that owns this schedule
+     */
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(Teachers::class, 'teacher_id');
+    }
+
+    /**
+     * Get the schedule time
+     */
+    public function scheduleTime(): BelongsTo
+    {
+        return $this->belongsTo(ScheduleTime::class, 'schedule_time_id');
+    }
+
+    /**
+     * Get day name in Indonesian
+     */
+    public function getDayName(): string
+    {
+        $days = [
+            1 => 'Senin',
+            2 => 'Selasa',
+            3 => 'Rabu',
+            4 => 'Kamis',
+            5 => 'Jumat',
+            6 => 'Sabtu',
+        ];
+
+        return $days[$this->day_of_week] ?? 'Unknown';
+    }
+}
