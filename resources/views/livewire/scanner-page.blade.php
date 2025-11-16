@@ -16,7 +16,7 @@
                     SMK DARUL FIKRI PUGUNG</h1>
             </div>
             <p class="text-[10px] sm:text-xs md:text-sm lg:text-base text-slate-300 font-medium">Scan QR code guru untuk
-                mencatat kehadiran</p>
+                mencatat kehadiran guru mengajar</p>
         </div>
     </div>
 
