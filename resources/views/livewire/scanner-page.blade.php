@@ -16,15 +16,23 @@
                 <!-- Class Room Selection -->
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-white mb-2">🏫 Pilih Kelas (Opsional)</label>
-                    <select
-                        wire:model.live="selectedClassRoom"
-                        class="w-full px-4 py-3 text-lg border-2 rounded-xl focus:ring-4 focus:ring-blue-400 focus:border-transparent bg-white/5 text-white placeholder-gray-400 transition-all border-white/30"
-                    >
-                        <option value="">Semua Kelas</option>
-                        @foreach(\App\Models\WeeklySchedules::distinct('class_room')->pluck('class_room') as $classRoom)
-                            <option value="{{ $classRoom }}">{{ $classRoom }}</option>
-                        @endforeach
-                    </select>
+                    <div class="relative">
+                        <select
+                            id="class-select"
+                            wire:model.lazy="selectedClassRoom"
+                            class="w-full px-4 py-3 pr-10 text-lg border-2 rounded-xl appearance-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-slate-700/40 text-white placeholder-gray-400 transition-colors border-slate-600 hover:bg-slate-700"
+                        >
+                            <option value="" class="bg-slate-700 text-white">Semua Kelas</option>
+                            @foreach(\App\Models\WeeklySchedules::distinct('class_room')->pluck('class_room') as $classRoom)
+                                <option value="{{ $classRoom }}" class="bg-slate-800 text-white">{{ $classRoom }}</option>
+                            @endforeach
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
                     <p class="text-xs text-gray-300 mt-1">Pilih kelas untuk filter scan (opsional)</p>
                 </div>
                 <input
@@ -157,40 +165,68 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        function initScannerBindings() {
             const input = document.getElementById('scanner-input');
+            const classSelect = document.getElementById('class-select');
             let scanTimeout;
 
-            if (input) {
-                input.focus();
+            if (!input) return;
 
-                // Auto focus kembali setelah blur
-                input.addEventListener('blur', function() {
+            // Fokuskan input scanner
+            input.focus();
+
+            // Auto focus kembali setelah blur, kecuali user sedang interaksi dengan elemen lain seperti SELECT/INPUT/TEXTAREA/BUTTON
+            input.onblur = function() {
+                setTimeout(() => {
+                    const active = document.activeElement;
+                    if (active && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(active.tagName)) {
+                        return;
+                    }
+                    if (classSelect && (active === classSelect || classSelect.contains(active))) {
+                        return;
+                    }
+                    input.focus();
+                }, 100);
+            };
+
+            // Jika pengguna mengubah pilihan kelas, kembalikan fokus ke input scanner setelah sedikit delay agar Livewire bisa menerima perubahan
+            if (classSelect) {
+                classSelect.onchange = function() {
                     setTimeout(() => {
                         input.focus();
-                    }, 100);
-                });
-
-                // Handle input - auto reset setelah scan
-                input.addEventListener('input', function() {
-                    // Clear previous timeout
-                    if (scanTimeout) {
-                        clearTimeout(scanTimeout);
-                    }
-
-                    // Set new timeout untuk auto clear input setelah 500ms (setelah QR selesai ter-scan)
-                    scanTimeout = setTimeout(() => {
-                        if (input.value.trim() !== '') {
-                            // Input akan di-clear otomatis oleh Livewire
-                            // Tapi pastikan focus tetap di input
-                            setTimeout(() => {
-                                input.value = '';
-                                input.focus();
-                            }, 100);
-                        }
-                    }, 500);
-                });
+                    }, 200);
+                };
             }
-        });
+
+            // Handle input - auto reset setelah scan
+            input.oninput = function() {
+                // Clear previous timeout
+                if (scanTimeout) {
+                    clearTimeout(scanTimeout);
+                }
+
+                // Set new timeout untuk auto clear input setelah 500ms (setelah QR selesai ter-scan)
+                scanTimeout = setTimeout(() => {
+                    if (input.value.trim() !== '') {
+                        // Input akan di-clear otomatis oleh Livewire
+                        // Tapi pastikan focus tetap di input
+                        setTimeout(() => {
+                            input.value = '';
+                            input.focus();
+                        }, 100);
+                    }
+                }, 500);
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', initScannerBindings);
+        document.addEventListener('livewire:load', initScannerBindings);
+        if (window.Livewire && typeof window.Livewire.hook === 'function') {
+            Livewire.hook('message.processed', (message, component) => {
+                initScannerBindings();
+            });
+        } else {
+            document.addEventListener('livewire:update', initScannerBindings);
+        }
     </script>
 </div>

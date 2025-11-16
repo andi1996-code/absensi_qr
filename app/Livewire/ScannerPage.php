@@ -53,8 +53,22 @@ class ScannerPage extends Component
     private function processQrCode(string $qrCode): void
     {
         try {
-            // Find teacher by QR code
-            $teacher = Teachers::where('qr_code', $qrCode)->firstOrFail();
+            // Cari teacher berdasarkan qr code, jika tidak ditemukan berikan notifikasi user-friendly
+            $teacher = Teachers::where('qr_code', $qrCode)->first();
+
+            if (!$teacher) {
+                $this->teacherData = [
+                    'name' => 'Tidak Ditemukan',
+                    'nip' => 'N/A',
+                    'photo' => null,
+                    'status' => 'not_found',
+                    'message' => 'Guru tidak ditemukan untuk QR code ini',
+                ];
+                $this->messageType = 'danger';
+                $this->message = '❌ Data guru tidak ditemukan. Pastikan QR code terdaftar.';
+                $this->processing = false;
+                return;
+            }
 
             // Get current time info
             $now = now();
@@ -197,9 +211,11 @@ class ScannerPage extends Component
             $this->processing = false;
             $this->selectedClassRoom = null;
         } catch (\Exception $e) {
+            // Log the error for debugging, but show a generic error message to the user
+            \Illuminate\Support\Facades\Log::error('ScannerPage processQrCode error: ' . $e->getMessage(), ['qrCode' => $qrCode]);
             $this->teacherData = null;
             $this->messageType = 'danger';
-            $this->message = '❌ ' . $e->getMessage();
+            $this->message = '❌ Terjadi kesalahan saat memproses QR code. Coba lagi.';
 
             // Reset processing flag even on error
             $this->processing = false;
