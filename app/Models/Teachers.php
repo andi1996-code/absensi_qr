@@ -67,4 +67,13 @@ class Teachers extends Model
     {
         return $this->hasMany(Salaries::class, 'teacher_id');
     }
+
+    /**
+     * Accessor to provide a unified `photo` attribute that maps to `photo_path`.
+     * This allows code to use either `$teacher->photo` or `$teacher->photo_path`.
+     */
+    public function getPhotoAttribute(): ?string
+    {
+        return $this->photo_path;
+    }
 }

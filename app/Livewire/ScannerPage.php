@@ -101,7 +101,7 @@ class ScannerPage extends Component
                 $this->teacherData = [
                     'name' => $teacher->name,
                     'nip' => $teacher->nip,
-                    'photo' => $teacher->photo,
+                    'photo' => $teacher->photo_path,
                     'status' => 'no_lesson_time',
                     'message' => 'Saat ini bukan waktu pelajaran',
                 ];
@@ -120,7 +120,7 @@ class ScannerPage extends Component
                 $this->teacherData = [
                     'name' => $teacher->name,
                     'nip' => $teacher->nip,
-                    'photo' => $teacher->photo,
+                    'photo' => $teacher->photo_path,
                     'status' => 'no_schedule',
                     'message' => 'Tidak memiliki jadwal mengajar hari ini',
                 ];
@@ -144,7 +144,7 @@ class ScannerPage extends Component
                     $this->teacherData = [
                         'name' => $teacher->name,
                         'nip' => $teacher->nip,
-                        'photo' => $teacher->photo,
+                        'photo' => $teacher->photo_path,
                         'status' => 'no_schedule_for_class',
                         'message' => "Guru {$teacher->name} tidak punya jadwal di kelas {$this->selectedClassRoom}",
                     ];
@@ -169,7 +169,7 @@ class ScannerPage extends Component
                 $this->teacherData = [
                     'name' => $teacher->name,
                     'nip' => $teacher->nip,
-                    'photo' => $teacher->photo,
+                    'photo' => $teacher->photo_path,
                     'status' => 'wrong_time',
                     'message' => "Jam Ke-{$currentHour} bukan jadwal mengajar (Total {$totalHours} jam hari ini)",
                 ];
@@ -189,7 +189,7 @@ class ScannerPage extends Component
                 $this->teacherData = [
                     'name' => $teacher->name,
                     'nip' => $teacher->nip,
-                    'photo' => $teacher->photo,
+                    'photo' => $teacher->photo_path,
                     'status' => 'already_scanned',
                     'message' => 'Sudah scan untuk blok ini',
                 ];
@@ -235,7 +235,7 @@ class ScannerPage extends Component
             $this->teacherData = [
                 'name' => $teacher->name,
                 'nip' => $teacher->nip,
-                'photo' => $teacher->photo,
+                'photo' => $teacher->photo_path,
                 'status' => 'success',
                 'message' => "Blok {$currentBlock['class_room']} Jam Ke-{$currentHour} ({$timeRange})",
                 'scanned_at' => $now->format('H:i:s'),
