@@ -28,11 +28,24 @@ class ScannerPage extends Component
     #[\Livewire\Attributes\On('qrCodeScanned')]
     public function handleQrCodeScanned(string $qrCode): void
     {
+        // Require class selection
+        if (empty($this->selectedClassRoom)) {
+            $this->messageType = 'warning';
+            $this->message = '❗ Pilih kelas terlebih dahulu sebelum melakukan scan.';
+            return;
+        }
         $this->processQrCode($qrCode);
     }
 
     public function updatedQrCode(): void
     {
+        // Require class selection
+        if (empty($this->selectedClassRoom)) {
+            $this->messageType = 'warning';
+            $this->message = '❗ Pilih kelas terlebih dahulu sebelum melakukan scan.';
+            $this->qrCode = '';
+            return;
+        }
         // Skip jika masih processing atau empty
         if ($this->processing || empty($this->qrCode)) {
             return;
@@ -53,6 +66,15 @@ class ScannerPage extends Component
     private function processQrCode(string $qrCode): void
     {
         try {
+            // Require class selection (double-check in case dev triggers directly)
+            if (empty($this->selectedClassRoom)) {
+                $this->teacherData = null;
+                $this->messageType = 'warning';
+                $this->message = '❗ Pilih kelas terlebih dahulu sebelum melakukan scan.';
+                $this->processing = false;
+                return;
+            }
+
             // Cari teacher berdasarkan qr code, jika tidak ditemukan berikan notifikasi user-friendly
             $teacher = Teachers::where('qr_code', $qrCode)->first();
 
@@ -116,6 +138,21 @@ class ScannerPage extends Component
                 $blocks = array_filter($blocks, function ($block) {
                     return $block['class_room'] === $this->selectedClassRoom;
                 });
+
+                // Jika setelah filter tidak ada block, berarti guru tidak ada jadwal di kelas terpilih
+                if (empty($blocks)) {
+                    $this->teacherData = [
+                        'name' => $teacher->name,
+                        'nip' => $teacher->nip,
+                        'photo' => $teacher->photo,
+                        'status' => 'no_schedule_for_class',
+                        'message' => "Guru {$teacher->name} tidak punya jadwal di kelas {$this->selectedClassRoom}",
+                    ];
+                    $this->messageType = 'warning';
+                    $this->message = "❌ Guru {$teacher->name} tidak ada jadwal di kelas {$this->selectedClassRoom}";
+                    $this->processing = false;
+                    return;
+                }
             }
 
             // Find the block that contains current hour

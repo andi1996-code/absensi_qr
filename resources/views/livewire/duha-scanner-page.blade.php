@@ -107,10 +107,10 @@
         </div>
 
         <!-- Right Column: Teacher Card - Premium Design -->
-        <div class="lg:w-3/4 flex items-center justify-center overflow-hidden order-1 lg:order-2 min-h-0">
+        <div class="lg:w-3/4 flex items-start justify-start overflow-hidden order-1 lg:order-2 min-h-0">
             @if ($teacherData)
                 <!-- Teacher Card - Success State -->
-                <div class="w-full group">
+                <div class="w-full group self-start">
                     <div class="relative rounded-lg sm:rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border transition-all duration-500
                         {{ match($teacherData['status']) {
                             'success' => 'bg-gradient-to-br from-green-400/10 to-emerald-600/10 border-green-400/30 group-hover:border-green-400/50 group-hover:shadow-green-500/20',
@@ -206,7 +206,7 @@
                 </div>
             @else
                 <!-- Empty State - Premium Design -->
-                <div class="w-full rounded-lg sm:rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-2xl">
+                <div class="w-full rounded-lg sm:rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-2xl self-start">
                     <div class="flex flex-col items-center justify-center py-6 sm:py-8 md:py-12 lg:py-24 px-3 sm:px-4 md:px-8">
                         <div class="relative mb-2 sm:mb-4 md:mb-8">
                             <div class="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
