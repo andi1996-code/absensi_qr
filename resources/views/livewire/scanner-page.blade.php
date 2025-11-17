@@ -37,11 +37,10 @@
                                 class="text-red-500">*</span>
                             <span class="sr-only">Required</span></label>
                         <div class="relative">
-                            <select id="class-select" wire:model.lazy="selectedClassRoom"
+                            <select id="class-select" wire:model.live="selectedClassRoom" autocomplete="off"
                                 class="w-full px-4 py-3 pr-10 text-lg border-2 rounded-xl appearance-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-slate-700/40 text-white placeholder-gray-400 transition-colors border-slate-600 hover:bg-slate-700">
-                                <option value="" disabled selected class="bg-slate-700 text-white">Pilih Kelas
-                                </option>
-                                @foreach (\App\Models\WeeklySchedules::whereNotNull('class_room')->distinct('class_room')->orderBy('class_room')->pluck('class_room') as $classRoom)
+                                <option value="" selected>-- Pilih Kelas --</option>
+                                @foreach ($classRooms as $classRoom)
                                     <option value="{{ $classRoom }}" class="bg-slate-800 text-white">
                                         {{ $classRoom }}</option>
                                 @endforeach
@@ -260,15 +259,6 @@
                 }, 100);
             };
 
-            // Jika pengguna mengubah pilihan kelas, kembalikan fokus ke input scanner setelah sedikit delay agar Livewire bisa menerima perubahan
-            if (classSelect) {
-                classSelect.onchange = function() {
-                    setTimeout(() => {
-                        input.focus();
-                    }, 200);
-                };
-            }
-
             // Handle input - auto reset setelah scan
             input.oninput = function() {
                 // Clear previous timeout
@@ -290,8 +280,22 @@
             };
         }
 
-        document.addEventListener('DOMContentLoaded', initScannerBindings);
-        document.addEventListener('livewire:load', initScannerBindings);
+        document.addEventListener('DOMContentLoaded', () => {
+            initScannerBindings();
+        });
+        document.addEventListener('livewire:load', () => {
+            initScannerBindings();
+        });
+
+        // Listen for a server-side dispatched browser event to focus the scanner input.
+        window.addEventListener('scanner-focus', () => {
+            const input = document.getElementById('scanner-input');
+            if (!input) return;
+            setTimeout(() => {
+                if (!input.disabled) input.focus();
+            }, 80); // small delay to allow potential re-render from Livewire
+        });
+
         if (window.Livewire && typeof window.Livewire.hook === 'function') {
             Livewire.hook('message.processed', (message, component) => {
                 initScannerBindings();

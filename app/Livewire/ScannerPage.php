@@ -19,10 +19,36 @@ class ScannerPage extends Component
     public int $scanCount = 0;
     public bool $processing = false;
     public ?string $selectedClassRoom = null;
+    public array $classRooms = [];
+    public bool $classOptionsLoaded = false;
 
     public function mount(): void
     {
         $this->scanCount = LessonAttendances::whereDate('date', today())->where('status', 'present')->count();
+
+        // Ensure no class is pre-selected on page load so placeholder shows
+        $this->selectedClassRoom = null;
+        $this->classOptionsLoaded = false;
+
+        // Preload class options to avoid dropdown race conditions on first selection
+        $this->loadClassRooms();
+
+        // Don't auto-select a class on mount; keep placeholder on initial load.
+    }
+
+    public function loadClassRooms(): void
+    {
+        if ($this->classOptionsLoaded) {
+            return;
+        }
+
+        $this->classRooms = WeeklySchedules::whereNotNull('class_room')
+            ->distinct('class_room')
+            ->orderBy('class_room')
+            ->pluck('class_room')
+            ->toArray();
+
+        $this->classOptionsLoaded = true;
     }
 
     #[\Livewire\Attributes\On('qrCodeScanned')]
@@ -61,6 +87,13 @@ class ScannerPage extends Component
 
         // Clear input setelah process
         $this->qrCode = '';
+    }
+
+    public function updatedSelectedClassRoom($value): void
+    {
+        // Dispatch a browser event to re-focus the scanner input after the class selection is updated.
+        // Livewire v3 uses $this->dispatch() to send browser events from PHP to JS
+        $this->dispatch('scanner-focus');
     }
 
     private function processQrCode(string $qrCode): void
