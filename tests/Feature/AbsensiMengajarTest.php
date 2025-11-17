@@ -14,7 +14,7 @@ use Carbon\Carbon;
 class AbsensiMengajarTest extends TestCase
 {
     /**
-     * Test deteksi blok jadwal
+     * Test deteksi sesi jadwal
      */
     public function test_get_schedule_blocks()
     {
@@ -95,7 +95,7 @@ class AbsensiMengajarTest extends TestCase
         $method->setAccessible(true);
         $blocks = $method->invoke($scannerPage, $schedules);
 
-        // Expected: Blok 1 (jam 1-2), Blok 2 (jam 4)
+        // Expected: Sesi 1 (jam 1-2), Sesi 2 (jam 4)
         $this->assertCount(2, $blocks);
         $this->assertEquals('A', $blocks[0]['class_room']);
         $this->assertEquals([1,2], $blocks[0]['hours']);
@@ -104,7 +104,7 @@ class AbsensiMengajarTest extends TestCase
     }
 
     /**
-     * Test scan di jam pertama blok
+     * Test scan di jam pertama sesi
      */
     public function test_scan_first_hour_of_block()
     {
@@ -179,7 +179,7 @@ class AbsensiMengajarTest extends TestCase
     }
 
     /**
-     * Test scan di jam kedua blok
+     * Test scan di jam kedua sesi
      */
     public function test_scan_second_hour_of_block()
     {

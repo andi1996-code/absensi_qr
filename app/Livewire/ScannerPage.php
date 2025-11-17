@@ -136,10 +136,10 @@ class ScannerPage extends Component
                     'nip' => $teacher->nip,
                     'photo' => $teacher->photo_path,
                     'status' => 'no_lesson_time',
-                    'message' => 'Saat ini bukan waktu pelajaran',
+                    'message' => 'Saat ini bukan waktu pelajaran. Absen sesi hanya dapat dilakukan saat jam pelajaran aktif.',
                 ];
                 $this->messageType = 'warning';
-                $this->message = '⚠️ Bukan waktu pelajaran';
+                $this->message = '⚠️ Saat ini bukan jam pelajaran aktif. Silakan lakukan scan saat jam pelajaran.';
                 $this->processing = false;
                 return;
             }
@@ -155,10 +155,10 @@ class ScannerPage extends Component
                     'nip' => $teacher->nip,
                     'photo' => $teacher->photo_path,
                     'status' => 'no_schedule',
-                    'message' => 'Tidak memiliki jadwal mengajar hari ini',
+                    'message' => 'Guru tidak memiliki jadwal mengajar hari ini',
                 ];
                 $this->messageType = 'warning';
-                $this->message = '⚠️ Guru ' . $teacher->name . ' tidak memiliki jadwal mengajar hari ini';
+                $this->message = '⚠️ Guru ' . $teacher->name . ' tidak memiliki jadwal mengajar hari ini. Pastikan memilih kelas yang benar atau hubungi admin.';
                 $this->processing = false;
                 return;
             }
@@ -182,7 +182,7 @@ class ScannerPage extends Component
                         'message' => "Guru {$teacher->name} tidak punya jadwal di kelas {$this->selectedClassRoom}",
                     ];
                     $this->messageType = 'warning';
-                    $this->message = "❌ Guru {$teacher->name} tidak ada jadwal di kelas {$this->selectedClassRoom}";
+                    $this->message = "❌ Guru {$teacher->name} tidak ada jadwal di kelas {$this->selectedClassRoom} hari ini. Silakan pilih kelas lain atau hubungi admin.";
                     $this->processing = false;
                     return;
                 }
@@ -204,10 +204,10 @@ class ScannerPage extends Component
                     'nip' => $teacher->nip,
                     'photo' => $teacher->photo_path,
                     'status' => 'wrong_time',
-                    'message' => "Jam Ke-{$currentHour} bukan jadwal mengajar (Total {$totalHours} jam hari ini)",
+                    'message' => "Jam ke-{$currentHour} bukan jadwal mengajar (Total {$totalHours} jam hari ini)",
                 ];
                 $this->messageType = 'warning';
-                $this->message = "⚠️ Guru {$teacher->name} tidak ada pelajaran jam ini";
+                $this->message = "⚠️ Guru {$teacher->name} tidak ada pelajaran pada jam ke-{$currentHour}. Silakan cek jadwal atau pilih kelas lain.";
                 $this->processing = false;
                 return;
             }
@@ -219,15 +219,22 @@ class ScannerPage extends Component
                 ->get();
 
             if ($existingRecords->isNotEmpty()) {
+                $scannedAtRecord = $existingRecords->whereNotNull('scanned_at')->first();
+                $scannedAtStr = $scannedAtRecord && $scannedAtRecord->scanned_at ? Carbon::parse($scannedAtRecord->scanned_at)->format('H:i:s') : null;
+
                 $this->teacherData = [
                     'name' => $teacher->name,
                     'nip' => $teacher->nip,
                     'photo' => $teacher->photo_path,
                     'status' => 'already_scanned',
-                    'message' => 'Sudah scan untuk blok ini',
+                    'message' => 'Sudah scan untuk sesi ini',
                 ];
                 $this->messageType = 'info';
-                $this->message = '⏱️ ' . $teacher->name . ' sudah melakukan scan untuk blok ini';
+                if ($scannedAtStr) {
+                    $this->message = '⏱️ ' . $teacher->name . ' sudah melakukan scan untuk sesi ini pada ' . $scannedAtStr . ' (hari ini).';
+                } else {
+                    $this->message = '⏱️ ' . $teacher->name . ' sudah melakukan scan untuk sesi ini hari ini.';
+                }
                 $this->processing = false;
                 return;
             }
@@ -247,7 +254,8 @@ class ScannerPage extends Component
                 }
             } else {
                 // For other cases, assume present for current and after, but since example only first/second, maybe error
-                $this->message = 'Scan hanya diperbolehkan di jam pertama atau kedua blok';
+                $this->messageType = 'danger';
+                $this->message = '❌ Scan hanya diperbolehkan pada jam pertama atau kedua dari satu sesi jam berturut-turut. Silakan lakukan scan pada jam pertama atau kedua sesi.';
                 $this->processing = false;
                 return;
             }
@@ -265,16 +273,26 @@ class ScannerPage extends Component
 
             $timeRange = $this->getTimeRange($currentHour);
             $classInfo = $this->selectedClassRoom ? " di {$this->selectedClassRoom}" : '';
+
+            // Build a readable summary of statuses (Jam X: Present/Absent)
+            $statusSummaryParts = [];
+            foreach ($statuses as $hour => $status) {
+                $statusSummaryParts[] = "Jam {$hour}: " . ucfirst($status);
+            }
+            $statusSummary = implode(', ', $statusSummaryParts);
+
+            $blockHoursStr = implode(', ', $currentBlock['hours']);
+
             $this->teacherData = [
                 'name' => $teacher->name,
                 'nip' => $teacher->nip,
                 'photo' => $teacher->photo_path,
                 'status' => 'success',
-                'message' => "Blok {$currentBlock['class_room']} Jam Ke-{$currentHour} ({$timeRange})",
+                'message' => "Sesi {$currentBlock['class_room']} Jam Ke-{$currentHour} ({$timeRange})",
                 'scanned_at' => $now->format('H:i:s'),
             ];
             $this->messageType = 'success';
-            $this->message = '✅ Absen blok berhasil dicatat' . $classInfo . '!';
+            $this->message = '✅ Absen sesi berhasil dicatat untuk kelas ' . $currentBlock['class_room'] . ' (Jam ' . $blockHoursStr . '). ' . $statusSummary;
             $this->scanCount += count($statuses);
 
             // Reset processing flag

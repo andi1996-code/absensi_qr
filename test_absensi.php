@@ -49,14 +49,14 @@ foreach ($days as $dayNum => $dayName) {
 
     echo "{$dayName}: " . count($schedules) . " jam\n";
     foreach ($blocks as $block) {
-        echo "  - Blok di {$block['class_room']}: jam " . implode(',', $block['hours']) . "\n";
+        echo "  - Sesi di {$block['class_room']}: jam " . implode(',', $block['hours']) . "\n";
     }
     echo "\n";
 }
 
 echo "=== Skenario Test Absensi ===\n";
-echo "1. Scan di jam pertama blok: Semua jam di blok present\n";
-echo "2. Scan di jam kedua blok: Jam pertama absent, sisanya present\n";
-echo "3. Scan di jam lain: Ditolak jika tidak ada blok\n";
+echo "1. Scan di jam pertama sesi: Semua jam di sesi present\n";
+echo "2. Scan di jam kedua sesi: Jam pertama absent, sisanya present\n";
+echo "3. Scan di jam lain: Ditolak jika tidak ada sesi\n";
 echo "4. Scan duplikat: Ditolak\n";
 echo "\nTest selesai.\n";
