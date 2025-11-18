@@ -42,6 +42,22 @@
             </div>
         </x-filament::section>
 
+        <!-- Class Selection (default for toggles) -->
+        <x-filament::section>
+            <x-slot name="heading">Pilih Kelas (opsional)</x-slot>
+            <div class="space-y-4">
+                <select wire:model.live="selectedClassRoomId" class="fi-input block w-full md:w-96 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm">
+                    <option value="">-- Pilih Kelas (opsional) --</option>
+                    @foreach($this->getClassRooms() as $cr)
+                        <option value="{{ $cr->id }}">{{ $cr->name }}</option>
+                    @endforeach
+                </select>
+                @if($this->selectedClassRoomId)
+                    <div class="text-sm text-gray-500">Kelas dipilih: {{ \App\Models\ClassRooms::find($this->selectedClassRoomId)?->name }}</div>
+                @endif
+            </div>
+        </x-filament::section>
+
         <!-- Schedule Matrix -->
         @if($this->selectedTeacherId)
             <x-filament::section>
@@ -52,8 +68,8 @@
                 <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                     <table class="w-full">
                         <thead class="divide-x divide-gray-200 bg-gray-50 dark:divide-gray-700 dark:bg-gray-900">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white w-24">Jam Ke-</th>
+                                <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white w-24">Jam</th>
                                 @foreach(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as $day)
                                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">{{ $day }}</th>
                                 @endforeach
@@ -62,14 +78,17 @@
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             @foreach($this->getScheduleMatrix() as $row)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $row['jam_ke'] }}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                                        <div class="text-sm font-semibold">{{ $row['label'] ?? 'Jam ' . $row['jam_ke'] }}</div>
+                                        <div class="text-xs text-gray-500">{{ $row['jam_mulai'] }}</div>
+                                    </td>
 
                                     @foreach($row['days'] as $day)
                                         <td class="px-4 py-3 text-center">
                                             <button
                                                 wire:click="toggleSchedule({{ $day['day_num'] }}, {{ $row['jam_ke'] }})"
                                                 class="inline-flex items-center justify-center w-10 h-10 rounded-lg font-bold transition-all duration-200 @if($day['has_schedule']) bg-green-600 hover:bg-green-700 shadow-lg dark:bg-green-700 dark:hover:bg-green-800 @else bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 @endif"
-                                                title="@if($day['has_schedule'])Hapus jadwal @else Tambah jadwal @endif">
+                                                title="@if($day['has_schedule'])Hapus jadwal ({{ $row['label'] ?? 'Jam ' . $row['jam_ke'] }}) @else Tambah jadwal ({{ $row['label'] ?? 'Jam ' . $row['jam_ke'] }}) @endif">
                                                 @if($day['has_schedule'])
                                                     <svg class="w-5 h-5 text-gray-900 dark:text-white" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />

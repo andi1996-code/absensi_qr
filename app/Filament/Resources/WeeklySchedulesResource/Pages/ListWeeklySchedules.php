@@ -6,6 +6,7 @@ use App\Filament\Resources\WeeklySchedulesResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Widgets\TeachersListWidget;
 
 class ListWeeklySchedules extends ListRecords
 {
@@ -14,14 +15,21 @@ class ListWeeklySchedules extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('schedule-builder')
-                ->label('📊 Lihat Tabel Grid')
-                ->url(route('schedule-builder'))
-                ->button()
-                ->icon('heroicon-o-table-cells'),
+            // Actions\Action::make('schedule-builder')
+            //     ->label('📊 Lihat Tabel Grid')
+            //     ->url(route('schedule-builder'))
+            //     ->button()
+            //     ->icon('heroicon-o-table-cells'),
 
-            Actions\CreateAction::make()
-                ->label('Tambah Jadwal'),
+            // Actions\CreateAction::make()
+            //     ->label('Tambah Jadwal'),
+        ];
+    }
+
+    public function getHeaderWidgets(): array
+    {
+        return [
+            TeachersListWidget::class,
         ];
     }
 

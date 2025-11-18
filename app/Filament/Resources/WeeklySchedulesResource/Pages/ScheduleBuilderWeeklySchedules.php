@@ -4,6 +4,7 @@ namespace App\Filament\Resources\WeeklySchedulesResource\Pages;
 
 use App\Models\Teachers;
 use App\Models\WeeklySchedules;
+use App\Models\ScheduleTime;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -24,6 +25,16 @@ class ScheduleBuilderWeeklySchedules extends Page
     protected static ?string $title = 'Jadwal Guru (Tabel Grid)';
 
     public ?int $selectedTeacherId = null;
+    public ?int $selectedClassRoomId = null;
+
+    public function mount(): void
+    {
+        // Set selected teacher from query param if provided
+        $teacherId = (int) request()->query('teacher_id', 0);
+        $this->selectedTeacherId = $teacherId > 0 ? $teacherId : null;
+        $classRoomId = (int) request()->query('class_room_id', 0);
+        $this->selectedClassRoomId = $classRoomId > 0 ? $classRoomId : null;
+    }
 
     protected function getHeaderActions(): array
     {
@@ -42,6 +53,11 @@ class ScheduleBuilderWeeklySchedules extends Page
             ->get();
     }
 
+    public function getClassRooms()
+    {
+        return \App\Models\ClassRooms::orderBy('name')->get();
+    }
+
     public function getScheduleMatrix()
     {
         if (!$this->selectedTeacherId) {
@@ -57,16 +73,25 @@ class ScheduleBuilderWeeklySchedules extends Page
             6 => 'Sabtu',
         ];
 
+        // Get configured lesson times (user defined)
+        $lessonTimes = ScheduleTime::where('is_lesson', true)
+            ->orderBy('hour_number')
+            ->get();
+
+        // Group existing schedules by hour_number for quick lookup
         $schedules = WeeklySchedules::where('teacher_id', $this->selectedTeacherId)
             ->get()
             ->groupBy('hour_number');
 
         $matrix = [];
-        for ($hour = 1; $hour <= 8; $hour++) {
+        foreach ($lessonTimes as $lt) {
+            $hour = (int) $lt->hour_number;
             $row = [
                 'jam_ke' => $hour,
-                'jam_mulai' => $this->getTimeRange($hour),
+                'jam_mulai' => sprintf('%s - %s', $lt->formatted_start_time, $lt->formatted_end_time),
                 'days' => [],
+                'schedule_time_id' => $lt->id,
+                'label' => $lt->label,
             ];
 
             foreach ($days as $dayNum => $dayName) {
@@ -131,33 +156,46 @@ class ScheduleBuilderWeeklySchedules extends Page
             4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu',
         ];
 
-        if ($schedule) {
+    $scheduleTimeForHour = ScheduleTime::where('is_lesson', true)->where('hour_number', $hour)->first();
+    $labelForHour = $scheduleTimeForHour?->label ?? 'Jam ' . $hour;
+
+    if ($schedule) {
             $schedule->delete();
             Notification::make()
                 ->success()
                 ->title('Jadwal Dihapus')
-                ->body("{$teacher->name} - {$days[$day]} Jam Ke-{$hour}")
+        ->body("{$teacher->name} - {$days[$day]} {$labelForHour}")
                 ->send();
         } else {
             // Find the corresponding ScheduleTime based on hour_number
-            $scheduleTime = \App\Models\ScheduleTime::where('is_lesson', true)
-                ->get()
-                ->first(function ($st) use ($hour) {
-                    preg_match('/\d+/', $st->label, $matches);
-                    return !empty($matches) && (int)$matches[0] === $hour;
-                });
+            $scheduleTime = ScheduleTime::where('is_lesson', true)
+                ->where('hour_number', $hour)
+                ->first();
+
+            if (! $scheduleTime) {
+                $scheduleTime = ScheduleTime::where('is_lesson', true)->first();
+            }
+
+            $classRoomId = $this->selectedClassRoomId;
+            $classRoomName = null;
+            if ($classRoomId) {
+                $classRoom = \App\Models\ClassRooms::find($classRoomId);
+                $classRoomName = $classRoom?->name;
+            }
 
             WeeklySchedules::create([
                 'teacher_id' => $this->selectedTeacherId,
                 'day_of_week' => $day,
                 'hour_number' => $hour,
-                'schedule_time_id' => $scheduleTime?->id ?? 1,
+                'schedule_time_id' => $scheduleTime?->id ?? $scheduleTimeForHour?->id ?? 1,
+                'class_room_id' => $classRoomId,
+                'class_room' => $classRoomName,
             ]);
 
             Notification::make()
                 ->success()
                 ->title('Jadwal Ditambahkan')
-                ->body("{$teacher->name} - {$days[$day]} Jam Ke-{$hour}")
+                ->body("{$teacher->name} - {$days[$day]} {$labelForHour}" . ($classRoomName ? " ({$classRoomName})" : ''))
                 ->send();
         }
     }

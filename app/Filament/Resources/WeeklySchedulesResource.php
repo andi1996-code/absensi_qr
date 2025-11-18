@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\WeeklySchedulesResource\Pages;
 use App\Models\WeeklySchedules;
 use App\Models\ScheduleTime;
+use App\Models\ClassRooms;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -66,10 +67,18 @@ class WeeklySchedulesResource extends Resource
                                     ->preload()
                                     ->required(),
 
-                                Forms\Components\TextInput::make('class_room')
+                                Forms\Components\Select::make('class_room_id')
                                     ->label('Kelas')
-                                    ->placeholder('e.g., A, B, IPA-1')
-                                    ->maxLength(10),
+                                    ->relationship('classRoom', 'name')
+                                    ->preload()
+                                    ->searchable()
+                                    ->nullable()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('name')
+                                            ->label('Nama Kelas')
+                                            ->required()
+                                            ->maxLength(255),
+                                    ]),
 
                                 Forms\Components\Hidden::make('hour_number')
                                     ->default(0),
@@ -112,10 +121,18 @@ class WeeklySchedulesResource extends Resource
                             ->preload()
                             ->required(),
 
-                        Forms\Components\TextInput::make('class_room')
+                        Forms\Components\Select::make('class_room_id')
                             ->label('Kelas')
-                            ->placeholder('e.g., A, B, IPA-1')
-                            ->maxLength(10),
+                            ->relationship('classRoom', 'name')
+                            ->preload()
+                            ->searchable()
+                            ->nullable()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nama Kelas')
+                                    ->required()
+                                    ->maxLength(255),
+                            ]),
 
                         Forms\Components\Hidden::make('hour_number')
                             ->default(0),
@@ -158,7 +175,7 @@ class WeeklySchedulesResource extends Resource
                     ->color('info')
                     ->width('25%'),
 
-                Tables\Columns\TextColumn::make('class_room')
+                Tables\Columns\TextColumn::make('classRoom.name')
                     ->label('Kelas')
                     ->badge()
                     ->color('success')
@@ -181,7 +198,14 @@ class WeeklySchedulesResource extends Resource
                         5 => 'Jumat',
                         6 => 'Sabtu',
                         7 => 'Minggu',
-                    ]),
+                        ]),
+
+                    Tables\Filters\SelectFilter::make('class_room_id')
+                        ->label('Filter Kelas')
+                        ->options(function () {
+                            return ClassRooms::orderBy('name')->get()->pluck('name', 'id')->toArray();
+                        })
+                        ->searchable(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

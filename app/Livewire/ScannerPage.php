@@ -42,11 +42,18 @@ class ScannerPage extends Component
             return;
         }
 
-        $this->classRooms = WeeklySchedules::whereNotNull('class_room')
-            ->distinct('class_room')
-            ->orderBy('class_room')
-            ->pluck('class_room')
-            ->toArray();
+        // If class_rooms table exists and has data, use it. Otherwise, fallback to the legacy `class_room` string in weekly_schedules.
+        if (\App\Models\ClassRooms::count() > 0) {
+            $this->classRooms = \App\Models\ClassRooms::orderBy('name')
+                ->pluck('name')
+                ->toArray();
+        } else {
+            $this->classRooms = WeeklySchedules::whereNotNull('class_room')
+                ->distinct('class_room')
+                ->orderBy('class_room')
+                ->pluck('class_room')
+                ->toArray();
+        }
 
         $this->classOptionsLoaded = true;
     }

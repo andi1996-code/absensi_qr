@@ -5,6 +5,7 @@ namespace App\Filament\Resources\WeeklySchedulesResource\Pages;
 use App\Filament\Resources\WeeklySchedulesResource;
 use App\Models\Teachers;
 use App\Models\WeeklySchedules;
+use App\Models\ScheduleTime;
 use Filament\Actions;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
@@ -55,14 +56,17 @@ class ScheduleGridWeeklySchedules extends ListRecords
             6 => 'Sabtu',
         ];
 
-        // Hours 1-8
-        $hours = range(1, 8);
+        // Use user-defined lesson times
+        $lessonTimes = ScheduleTime::where('is_lesson', true)
+            ->orderBy('hour_number')
+            ->get();
 
         $schedules = WeeklySchedules::where('teacher_id', $teacher->id)->get();
 
         $grid = [];
-        foreach ($hours as $hour) {
-            $row = ['jam_ke' => $hour];
+        foreach ($lessonTimes as $lt) {
+            $hour = (int) $lt->hour_number;
+            $row = ['jam_ke' => $hour, 'jam_mulai' => sprintf('%s - %s', $lt->formatted_start_time, $lt->formatted_end_time)];
             foreach ($days as $dayNum => $dayName) {
                 $hasSchedule = $schedules
                     ->where('day_of_week', $dayNum)
@@ -100,10 +104,13 @@ class ScheduleGridWeeklySchedules extends ListRecords
                 ->body("Jam Ke-{$hour} dihapus dari jadwal")
                 ->send();
         } else {
+            $scheduleTime = ScheduleTime::where('is_lesson', true)->where('hour_number', $hour)->first();
+
             WeeklySchedules::create([
                 'teacher_id' => $this->selectedTeacherId,
                 'day_of_week' => $day,
                 'hour_number' => $hour,
+                'schedule_time_id' => $scheduleTime?->id,
             ]);
 
             Notification::make()

@@ -39,18 +39,27 @@ class CreateWeeklySchedules extends CreateRecord
 
         // Buat multiple schedule records
         $count = 0;
-        foreach ($schedules as $schedule) {
+    foreach ($schedules as $schedule) {
             // Validasi: harus ada day_of_week dan schedule_time_id
             if (!empty($schedule['day_of_week']) && !empty($schedule['schedule_time_id'])) {
                 // Ambil schedule time untuk mendapatkan hour_number
                 $scheduleTime = \App\Models\ScheduleTime::find($schedule['schedule_time_id']);
 
                 if ($scheduleTime) {
+                    $classRoomName = null;
+                    $classRoomId = $schedule['class_room_id'] ?? null;
+                    if (!empty($classRoomId)) {
+                        $classRoomModel = \App\Models\ClassRooms::find($classRoomId);
+                        $classRoomName = $classRoomModel?->name;
+                    }
+
                     WeeklySchedules::create([
                         'teacher_id' => $teacherId,
                         'day_of_week' => $schedule['day_of_week'],
                         'schedule_time_id' => $schedule['schedule_time_id'],
                         'hour_number' => $scheduleTime->hour_number,
+                        'class_room_id' => $classRoomId,
+                        'class_room' => $classRoomName,
                     ]);
                     $count++;
                 }

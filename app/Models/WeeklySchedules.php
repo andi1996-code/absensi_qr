@@ -15,6 +15,7 @@ class WeeklySchedules extends Model
         'hour_number',
         'schedule_time_id',
         'class_room',
+        'class_room_id',
     ];
 
     protected $casts = [
@@ -38,6 +39,25 @@ class WeeklySchedules extends Model
     public function scheduleTime(): BelongsTo
     {
         return $this->belongsTo(ScheduleTime::class, 'schedule_time_id');
+    }
+
+    /**
+     * Get the class room relation if available
+     */
+    public function classRoom(): BelongsTo
+    {
+        return $this->belongsTo(ClassRooms::class, 'class_room_id');
+    }
+
+    protected static function booted()
+    {
+        static::saving(function (WeeklySchedules $schedule) {
+            // If class_room_id is set, ensure class_room (string) matches the class name
+            if ($schedule->class_room_id) {
+                $classRoom = ClassRooms::find($schedule->class_room_id);
+                $schedule->class_room = $classRoom?->name;
+            }
+        });
     }
 
     /**
