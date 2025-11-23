@@ -186,7 +186,8 @@ class WeeklySchedulesResource extends Resource
                 Tables\Filters\SelectFilter::make('teacher_id')
                     ->label('Filter Guru')
                     ->relationship('teacher', 'name')
-                    ->searchable(),
+                    ->searchable()
+                    ->columnSpan(1),
 
                 Tables\Filters\SelectFilter::make('day_of_week')
                     ->label('Filter Hari')
@@ -198,15 +199,18 @@ class WeeklySchedulesResource extends Resource
                         5 => 'Jumat',
                         6 => 'Sabtu',
                         7 => 'Minggu',
-                        ]),
+                        ])
+                    ->columnSpan(1),
 
                     Tables\Filters\SelectFilter::make('class_room_id')
                         ->label('Filter Kelas')
                         ->options(function () {
                             return ClassRooms::orderBy('name')->get()->pluck('name', 'id')->toArray();
                         })
-                        ->searchable(),
+                        ->searchable()
+                        ->columnSpan(1),
             ])
+            ->filtersFormColumns(2)
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

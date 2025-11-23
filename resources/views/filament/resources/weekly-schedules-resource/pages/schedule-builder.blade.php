@@ -43,7 +43,7 @@
         </x-filament::section>
 
         <!-- Class Selection (default for toggles) -->
-        <x-filament::section>
+        {{-- <x-filament::section>
             <x-slot name="heading">Pilih Kelas (opsional)</x-slot>
             <div class="space-y-4">
                 <select wire:model.live="selectedClassRoomId" class="fi-input block w-full md:w-96 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm">
@@ -56,7 +56,7 @@
                     <div class="text-sm text-gray-500">Kelas dipilih: {{ \App\Models\ClassRooms::find($this->selectedClassRoomId)?->name }}</div>
                 @endif
             </div>
-        </x-filament::section>
+        </x-filament::section> --}}
 
         <!-- Schedule Matrix -->
         @if($this->selectedTeacherId)
@@ -127,4 +127,43 @@
             </x-filament::section>
         @endif
     </div>
+
+    <!-- Modal Pilih Kelas -->
+    @if($showClassModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" wire:click.self="cancelClassModal">
+            <div class="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Pilih Kelas untuk Jadwal</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pilih kelas untuk jadwal yang akan ditambahkan</p>
+                </div>
+
+                <div class="mb-6">
+                    <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Kelas</label>
+                    <select
+                        wire:model="modalClassRoomId"
+                        class="fi-input block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition duration-75 placeholder:text-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500">
+                        <option value="">-- Pilih Kelas --</option>
+                        @foreach($this->getClassRooms() as $cr)
+                            <option value="{{ $cr->id }}">{{ $cr->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button
+                        wire:click="cancelClassModal"
+                        type="button"
+                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+                        Batal
+                    </button>
+                    <button
+                        wire:click="saveScheduleWithClass"
+                        type="button"
+                        class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600">
+                        Simpan Jadwal
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>

@@ -27,6 +27,11 @@ class ScheduleBuilderWeeklySchedules extends Page
     public ?int $selectedTeacherId = null;
     public ?int $selectedClassRoomId = null;
 
+    public bool $showClassModal = false;
+    public ?int $pendingDay = null;
+    public ?int $pendingHour = null;
+    public ?int $modalClassRoomId = null;
+
     public function mount(): void
     {
         // Set selected teacher from query param if provided
@@ -167,6 +172,12 @@ class ScheduleBuilderWeeklySchedules extends Page
         ->body("{$teacher->name} - {$days[$day]} {$labelForHour}")
                 ->send();
         } else {
+            // Tampilkan modal untuk pilih kelas
+            $this->pendingDay = $day;
+            $this->pendingHour = $hour;
+            $this->modalClassRoomId = null;
+            $this->showClassModal = true;
+            return;
             // Find the corresponding ScheduleTime based on hour_number
             $scheduleTime = ScheduleTime::where('is_lesson', true)
                 ->where('hour_number', $hour)
@@ -198,6 +209,69 @@ class ScheduleBuilderWeeklySchedules extends Page
                 ->body("{$teacher->name} - {$days[$day]} {$labelForHour}" . ($classRoomName ? " ({$classRoomName})" : ''))
                 ->send();
         }
+    }
+
+    public function saveScheduleWithClass(): void
+    {
+        if (!$this->modalClassRoomId) {
+            Notification::make()
+                ->warning()
+                ->title('Pilih Kelas Terlebih Dahulu')
+                ->send();
+            return;
+        }
+
+        if (!$this->pendingDay || !$this->pendingHour) {
+            return;
+        }
+
+        $teacher = Teachers::find($this->selectedTeacherId);
+        $classRoom = \App\Models\ClassRooms::find($this->modalClassRoomId);
+
+        $scheduleTime = ScheduleTime::where('is_lesson', true)
+            ->where('hour_number', $this->pendingHour)
+            ->first();
+
+        if (!$scheduleTime) {
+            $scheduleTime = ScheduleTime::where('is_lesson', true)->first();
+        }
+
+        WeeklySchedules::create([
+            'teacher_id' => $this->selectedTeacherId,
+            'day_of_week' => $this->pendingDay,
+            'hour_number' => $this->pendingHour,
+            'schedule_time_id' => $scheduleTime?->id ?? 1,
+            'class_room_id' => $this->modalClassRoomId,
+            'class_room' => $classRoom?->name,
+        ]);
+
+        $days = [
+            1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu',
+            4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu',
+        ];
+
+        $scheduleTimeForHour = ScheduleTime::where('is_lesson', true)->where('hour_number', $this->pendingHour)->first();
+        $labelForHour = $scheduleTimeForHour?->label ?? 'Jam ' . $this->pendingHour;
+
+        Notification::make()
+            ->success()
+            ->title('Jadwal Ditambahkan')
+            ->body("{$teacher->name} - {$days[$this->pendingDay]} {$labelForHour} ({$classRoom->name})")
+            ->send();
+
+        // Reset modal
+        $this->showClassModal = false;
+        $this->pendingDay = null;
+        $this->pendingHour = null;
+        $this->modalClassRoomId = null;
+    }
+
+    public function cancelClassModal(): void
+    {
+        $this->showClassModal = false;
+        $this->pendingDay = null;
+        $this->pendingHour = null;
+        $this->modalClassRoomId = null;
     }
 
     public function getTotalScheduledHours(): int

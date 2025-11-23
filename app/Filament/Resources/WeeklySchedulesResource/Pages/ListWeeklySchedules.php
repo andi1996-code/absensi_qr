@@ -26,11 +26,16 @@ class ListWeeklySchedules extends ListRecords
         ];
     }
 
-    public function getHeaderWidgets(): array
+    public function getHeader(): ?\Illuminate\Contracts\View\View
     {
-        return [
-            TeachersListWidget::class,
-        ];
+        return view('filament.widgets.teachers-list-header', [
+            'teachers' => \App\Models\Teachers::where('is_active', true)->orderBy('name')->get()
+        ]);
+    }
+
+    public function getMaxContentWidth(): ?string
+    {
+        return 'full';
     }
 
     protected function getTableQuery(): Builder

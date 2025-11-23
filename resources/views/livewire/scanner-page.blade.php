@@ -10,10 +10,10 @@
                 </div> --}}
                 <h1
                     class="text-lg sm:text-2xl md:text-3xl lg:text-5xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">
-                    Absensi Guru</h1>
+                    SELAMAT DATANG DI SMK DARUL FIKRI</h1>
                 <h1
-                    class="text-lg sm:text-2xl md:text-3xl lg:text-5xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">
-                    SMK DARUL FIKRI PUGUNG</h1>
+                    class="text-lg sm:text-2xl md:text-3xl lg:text-3xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">
+                    SILAHKAN ABSEN DISINI</h1>
             </div>
             <p class="text-[10px] sm:text-xs md:text-sm lg:text-base text-slate-300 font-medium">Scan QR code guru untuk
                 mencatat kehadiran guru mengajar</p>

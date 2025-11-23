@@ -11,6 +11,8 @@ class TeachersListWidget extends Widget
 
     protected static string $view = 'filament.widgets.teachers-list';
 
+    protected int | string | array $columnSpan = 'full';
+
     public function getTeachers()
     {
         return Teachers::where('is_active', true)
