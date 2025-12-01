@@ -18,6 +18,23 @@
             <p class="text-[10px] sm:text-xs md:text-sm lg:text-base text-slate-300 font-medium">Scan QR code guru untuk
                 mencatat kehadiran guru mengajar</p>
         </div>
+
+        <!-- Fullscreen toggle button di sisi kanan -->
+        <button id="fullscreen-toggle"
+            class="ml-4 inline-flex items-center justify-center p-2 sm:p-2.5 md:p-3 rounded-full border border-white/20 bg-white/5 text-slate-100 hover:bg-white/10 hover:border-white/40 transition-all shadow-lg">
+            <svg id="fullscreen-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 3H5a2 2 0 0 0-2 2v4" />
+                <path d="M3 5l5 5" />
+                <path d="M15 3h4a2 2 0 0 1 2 2v4" />
+                <path d="M21 5l-5 5" />
+                <path d="M9 21H5a2 2 0 0 1-2-2v-4" />
+                <path d="M3 19l5-5" />
+                <path d="M15 21h4a2 2 0 0 0 2-2v-4" />
+                <path d="M21 19l-5-5" />
+            </svg>
+        </button>
     </div>
 
     <!-- Main Content - Flexible Layout -->
@@ -235,6 +252,39 @@
             }
         }
 
+        function toggleFullScreen() {
+            const container = document.querySelector('body');
+            const btn = document.getElementById('fullscreen-toggle');
+            const icon = document.getElementById('fullscreen-icon');
+
+            if (!btn || !container) return;
+
+            btn.addEventListener('click', () => {
+                const doc = document;
+                const isFull = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+                if (!isFull) {
+                    if (container.requestFullscreen) container.requestFullscreen();
+                    else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+                    else if (container.mozRequestFullScreen) container.mozRequestFullScreen();
+                    else if (container.msRequestFullscreen) container.msRequestFullscreen();
+                } else {
+                    if (doc.exitFullscreen) doc.exitFullscreen();
+                    else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+                    else if (doc.mozCancelFullScreen) doc.mozCancelFullScreen();
+                    else if (doc.msExitFullscreen) doc.msExitFullscreen();
+                }
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                const isFull = document.fullscreenElement;
+                if (icon) {
+                    // opsional: bisa ganti style jika fullscreen aktif
+                    icon.classList.toggle('text-green-300', !!isFull);
+                }
+            });
+        }
+
         function initScannerBindings() {
             const input = document.getElementById('scanner-input');
             const classSelect = document.getElementById('class-select');
@@ -281,6 +331,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            toggleFullScreen();
             initScannerBindings();
         });
         document.addEventListener('livewire:load', () => {
