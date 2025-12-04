@@ -27,7 +27,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Livewire\CustomLoginForm::class)
+            ->loginRouteSlug('login-admin')
             ->colors([
                 'primary' => Color::Amber,
             ])

@@ -7,7 +7,10 @@ use App\Livewire\DuhaScannerPage;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\TeacherImportController;
 
-Route::redirect('/', '/admin');
+// Redirect root ke admin login
+Route::get('/', function () {
+    return redirect('/admin/login-admin');
+});
 
 // Schedule Builder Route - register di Filament panel
 Route::middleware(['web', 'auth'])->prefix('admin')->group(function () {
