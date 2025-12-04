@@ -1,5 +1,8 @@
 <div
     class="w-screen h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col p-6 overflow-hidden">
+    <!-- Navbar Component -->
+    <x-navbar />
+
     <!-- Header - Premium Style (match Duha) -->
     <div class="flex items-center justify-between mb-2 sm:mb-3 md:mb-4 lg:mb-6">
         <div class="text-center flex-1">
@@ -9,7 +12,7 @@
                     <span class="text-sm sm:text-base md:text-lg lg:text-2xl">🌅</span>
                 </div> --}}
                 <h1
-                    class="text-lg sm:text-2xl md:text-3xl lg:text-5xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">
+                    class="text-lg sm:text-2xl md:text-3xl lg:text-3xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">
                     SELAMAT DATANG DI SMK DARUL FIKRI</h1>
                 <h1
                     class="text-lg sm:text-2xl md:text-3xl lg:text-3xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">

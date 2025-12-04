@@ -1,18 +1,22 @@
 <div class="w-screen h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
-    <!-- Header - Premium Style -->
-    <div class="flex items-center justify-between mb-1.5 sm:mb-2 md:mb-3 lg:mb-4">
+    <!-- Navbar Component -->
+    <x-navbar />
+
+    <!-- Header with Fullscreen Button -->
+    <div class="flex items-start justify-between mb-1.5 sm:mb-2 md:mb-3 lg:mb-4">
+        <!-- Header - Selamat Datang Section -->
         <div class="text-center flex-1">
-            <div class="flex items-center justify-center gap-1 sm:gap-2 md:gap-3 mb-0.5 sm:mb-1 md:mb-1.5">
-                <h1 class="text-base sm:text-xl md:text-2xl lg:text-4xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">SELAMAT DATANG DI SMK DARUL FIKRI</h1>
-            </div>
+            <h1 class="text-base sm:text-xl md:text-2xl lg:text-4xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent inline-block mb-0.5 sm:mb-1 md:mb-1.5">
+                SISTEM ABSENSI DIGITAL
+            </h1>
             <p class="text-[9px] sm:text-xs md:text-sm lg:text-base text-slate-300 font-medium">Silahkan Absen Disini</p>
         </div>
 
-        <!-- Fullscreen Button -->
+        <!-- Fullscreen Button - Right Corner -->
         <button
             id="fullscreenBtn"
             onclick="toggleFullscreen()"
-            class="absolute right-2 sm:right-3 md:right-4 lg:right-6 top-2 sm:top-3 md:top-4 lg:top-6 group px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 hover:border-white/30 transition-all duration-300 text-slate-200 hover:text-white"
+            class="shrink-0 group px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 hover:border-white/30 transition-all duration-300 text-slate-200 hover:text-white ml-2 sm:ml-3 md:ml-4"
             title="Toggle Fullscreen"
         >
             <svg class="w-4 sm:w-5 md:w-5 h-4 sm:h-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
