@@ -1,6 +1,5 @@
 <div class="w-screen h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
-    <!-- Navbar Component -->
-    <x-navbar />
+
 
     <!-- Header with Fullscreen Button -->
     <div class="flex items-center justify-between mb-1.5 sm:mb-2 md:mb-3 lg:mb-4 w-full">

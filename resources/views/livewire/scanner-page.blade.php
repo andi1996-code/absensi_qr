@@ -1,7 +1,6 @@
 <div
     class="w-screen h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col p-6 overflow-hidden">
-    <!-- Navbar Component -->
-    <x-navbar />
+
 
     <!-- Header - Premium Style (match Duha) -->
     <div class="flex items-center justify-between mb-2 sm:mb-3 md:mb-4 lg:mb-6">
