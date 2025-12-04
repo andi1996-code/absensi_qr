@@ -3,13 +3,10 @@
     <x-navbar />
 
     <!-- Header with Fullscreen Button -->
-    <div class="flex items-start justify-between mb-1.5 sm:mb-2 md:mb-3 lg:mb-4">
+    <div class="flex items-center justify-between mb-1.5 sm:mb-2 md:mb-3 lg:mb-4 w-full">
         <!-- Header - Selamat Datang Section -->
-        <div class="text-center flex-1">
-            <h1 class="text-base sm:text-xl md:text-2xl lg:text-4xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent inline-block mb-0.5 sm:mb-1 md:mb-1.5">
-                SISTEM ABSENSI DIGITAL
-            </h1>
-            <p class="text-[9px] sm:text-xs md:text-sm lg:text-base text-slate-300 font-medium">Silahkan Absen Disini</p>
+        <div class="flex-1">
+            <x-header-welcome />
         </div>
 
         <!-- Fullscreen Button - Right Corner -->

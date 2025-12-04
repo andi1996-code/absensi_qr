@@ -5,21 +5,9 @@
 
     <!-- Header - Premium Style (match Duha) -->
     <div class="flex items-center justify-between mb-2 sm:mb-3 md:mb-4 lg:mb-6">
-        <div class="text-center flex-1">
-            <div class="flex-row items-center justify-center gap-1 sm:gap-2 md:gap-3 mb-0.5 sm:mb-1 md:mb-2">
-                {{-- <div
-                    class="w-6 sm:w-8 md:w-10 lg:w-12 h-6 sm:h-8 md:h-10 lg:h-12 bg-gradient-to-br from-purple-400 to-blue-500 rounded-lg flex items-center justify-center">
-                    <span class="text-sm sm:text-base md:text-lg lg:text-2xl">🌅</span>
-                </div> --}}
-                <h1
-                    class="text-lg sm:text-2xl md:text-3xl lg:text-3xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">
-                    SELAMAT DATANG DI SMK DARUL FIKRI</h1>
-                <h1
-                    class="text-lg sm:text-2xl md:text-3xl lg:text-3xl font-black bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">
-                    SILAHKAN ABSEN DISINI</h1>
-            </div>
-            <p class="text-[10px] sm:text-xs md:text-sm lg:text-base text-slate-300 font-medium">Scan QR code guru untuk
-                mencatat kehadiran guru mengajar</p>
+        <!-- Header Welcome Component -->
+        <div class="flex-1">
+            <x-header-welcome />
         </div>
 
         <!-- Fullscreen toggle button di sisi kanan -->
