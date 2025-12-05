@@ -221,6 +221,9 @@
     </div>
 
     <script>
+        // Variable global untuk menyimpan state fullscreen - HARUS DI ATAS
+        let isFullscreenMode = false;
+
         function clock() {
             return {
                 time: new Date().toLocaleTimeString('id-ID', {
@@ -254,11 +257,13 @@
                 const isFull = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
 
                 if (!isFull) {
+                    isFullscreenMode = true; // Set flag fullscreen
                     if (container.requestFullscreen) container.requestFullscreen();
                     else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
                     else if (container.mozRequestFullScreen) container.mozRequestFullScreen();
                     else if (container.msRequestFullscreen) container.msRequestFullscreen();
                 } else {
+                    isFullscreenMode = false; // Unset flag fullscreen
                     if (doc.exitFullscreen) doc.exitFullscreen();
                     else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
                     else if (doc.mozCancelFullScreen) doc.mozCancelFullScreen();
@@ -266,13 +271,44 @@
                 }
             });
 
-            document.addEventListener('fullscreenchange', () => {
-                const isFull = document.fullscreenElement;
+            // Event listener untuk detect perubahan fullscreen (termasuk saat user tekan ESC)
+            const handleFullscreenChange = () => {
+                const doc = document;
+                const isFull = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+                // Update state berdasarkan kondisi aktual
+                if (!isFull) {
+                    isFullscreenMode = false;
+                }
+
                 if (icon) {
-                    // opsional: bisa ganti style jika fullscreen aktif
                     icon.classList.toggle('text-green-300', !!isFull);
                 }
-            });
+            };
+
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        }
+
+        function maintainFullscreen() {
+            // Cek apakah seharusnya dalam mode fullscreen
+            if (isFullscreenMode) {
+                const doc = document;
+                const isFull = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+                // Jika tidak dalam fullscreen tapi seharusnya fullscreen, aktifkan kembali
+                if (!isFull) {
+                    const container = document.querySelector('body');
+                    if (container) {
+                        if (container.requestFullscreen) container.requestFullscreen();
+                        else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+                        else if (container.mozRequestFullScreen) container.mozRequestFullScreen();
+                        else if (container.msRequestFullscreen) container.msRequestFullscreen();
+                    }
+                }
+            }
         }
 
         function initScannerBindings() {
@@ -281,6 +317,9 @@
             let scanTimeout;
 
             if (!input) return;
+
+            // Pertahankan fullscreen mode
+            maintainFullscreen();
 
             // Fokuskan input scanner jika tidak dalam keadaan disabled
             if (!input.disabled) input.focus();
@@ -340,9 +379,13 @@
         if (window.Livewire && typeof window.Livewire.hook === 'function') {
             Livewire.hook('message.processed', (message, component) => {
                 initScannerBindings();
+                maintainFullscreen();
             });
         } else {
-            document.addEventListener('livewire:update', initScannerBindings);
+            document.addEventListener('livewire:update', () => {
+                initScannerBindings();
+                maintainFullscreen();
+            });
         }
     </script>
 </div>

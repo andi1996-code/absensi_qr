@@ -251,24 +251,46 @@
     </div>
 
     <script>
+        // Variable global untuk menyimpan state fullscreen
+        let isFullscreenActive = false;
+
         function toggleFullscreen() {
             const elem = document.documentElement;
             const btn = document.getElementById('fullscreenBtn');
 
             if (!document.fullscreenElement) {
                 // Enter fullscreen
+                isFullscreenActive = true;
                 elem.requestFullscreen().catch(err => {
                     console.error('Error entering fullscreen:', err);
+                    isFullscreenActive = false;
                 });
             } else {
                 // Exit fullscreen
+                isFullscreenActive = false;
                 document.exitFullscreen();
+            }
+        }
+
+        function maintainFullscreenDuha() {
+            // Cek apakah seharusnya dalam mode fullscreen
+            if (isFullscreenActive && !document.fullscreenElement) {
+                const elem = document.documentElement;
+                elem.requestFullscreen().catch(err => {
+                    console.error('Error maintaining fullscreen:', err);
+                });
             }
         }
 
         // Update button icon when fullscreen changes
         document.addEventListener('fullscreenchange', function() {
             const btn = document.getElementById('fullscreenBtn');
+
+            // Update state jika user keluar dengan ESC
+            if (!document.fullscreenElement) {
+                isFullscreenActive = false;
+            }
+
             if (document.fullscreenElement) {
                 btn.innerHTML = '<svg class="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
             } else {
@@ -312,11 +334,25 @@
                             setTimeout(() => {
                                 input.value = '';
                                 input.focus();
+                                // Pertahankan fullscreen setelah scan
+                                maintainFullscreenDuha();
                             }, 100);
                         }
                     }, 500);
                 });
             }
         });
+
+        // Livewire hooks untuk menjaga fullscreen setelah update
+        if (window.Livewire) {
+            if (typeof window.Livewire.hook === 'function') {
+                Livewire.hook('message.processed', (message, component) => {
+                    maintainFullscreenDuha();
+                });
+            }
+            document.addEventListener('livewire:update', () => {
+                maintainFullscreenDuha();
+            });
+        }
     </script>
 </div>
