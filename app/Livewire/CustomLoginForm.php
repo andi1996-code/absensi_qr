@@ -55,6 +55,13 @@ class CustomLoginForm extends Component implements HasForms
 
         if (Auth::guard('web')->attempt($credentials, $this->remember)) {
             session()->regenerate();
+
+            // Debug: Log successful login
+            \Illuminate\Support\Facades\Log::info('User logged in successfully', [
+                'user_id' => Auth::id(),
+                'authenticated' => Auth::check(),
+            ]);
+
             return redirect()->intended(Filament::getUrl());
         }
 
